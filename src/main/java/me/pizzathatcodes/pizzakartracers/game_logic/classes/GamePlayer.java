@@ -1,6 +1,7 @@
 package me.pizzathatcodes.pizzakartracers.game_logic.classes;
 
 import fr.mrmicky.fastboard.FastBoard;
+import me.pizzathatcodes.pizzakartracers.utils.util;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,6 +16,7 @@ public class GamePlayer {
     Kart kart;
     FastBoard board;
     double driftDelay;
+    String item;
 
     int lap;
 
@@ -23,6 +25,7 @@ public class GamePlayer {
         this.kart = kart;
         this.lap = 1;
         this.board = board;
+        this.item = util.translate("&7none");
     }
 
     /**
@@ -84,6 +87,22 @@ public class GamePlayer {
      */
     public void setBoard(FastBoard board) {
         this.board = board;
+    }
+
+    /**
+     * Get the player's item
+     * @return the player's item
+     */
+    public String getItem() {
+        return item;
+    }
+
+    /**
+     * Set the player's item
+     * @param item the item to set
+     */
+    public void setItem(String item) {
+        this.item = item;
     }
 
     public void createKart() {

@@ -232,7 +232,7 @@ public class mapSystem {
                         public void run() {
                             gamePlayer.createKart();
                         }
-                    }.runTaskLater(Main.getInstance(), 10L); // A slight delay to ensure teleport is complete
+                    }.runTaskLater(Main.getInstance(), 3L); // A slight delay to ensure teleport is complete
 
                     validGameSpawnLocations.remove(locationObj);
 

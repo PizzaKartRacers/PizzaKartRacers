@@ -2,10 +2,11 @@ package me.pizzathatcodes.pizzakartracers.queue_logic;
 
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
+import me.pizzathatcodes.pizzakartracers.game_logic.classes.gameScoreboard;
 import me.pizzathatcodes.pizzakartracers.queue_logic.classes.queueScoreboard;
 import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerJoinEvent;
 import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerLeaveEvent;
-import net.slimeworksapi.utils.Utils;
+import me.pizzathatcodes.pizzakartracers.utils.util;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -50,7 +51,10 @@ public class Queue {
                 for(Player player : getPlayers()) {
                     GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUniqueId());
                     if(gamePlayer == null) continue;
-                    queueScoreboard.updateBoard(gamePlayer.getBoard());
+                    if(Main.getQueue() != null)
+                        queueScoreboard.updateBoard(gamePlayer.getBoard());
+                    else
+                        gameScoreboard.updateBoard(gamePlayer.getBoard());
                 }
 
             }
@@ -120,21 +124,21 @@ public class Queue {
 
         if (timeWaitLeft == 30) {
             for (Player player : playerList) {
-                player.sendMessage(Utils.coloredString("&fGame starting in &a30 &fseconds!"));
+                player.sendMessage(util.translate("&eThe game starts in &a30 &eseconds!"));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
         if (timeWaitLeft == 20) {
             for (Player player : playerList) {
-                player.sendMessage(Utils.coloredString("&fGame starting in &e20 &fseconds!"));
+                player.sendMessage(util.translate("&eThe game starts in &e20 &eseconds!"));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
         if (timeWaitLeft == 10) {
             for (Player player : playerList) {
-                player.sendMessage(Utils.coloredString("&fGame starting in &c10 &fseconds!"));
+                player.sendMessage(util.translate("&eThe game starts in &c10 &eseconds!"));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
@@ -142,8 +146,8 @@ public class Queue {
 
         if (timeWaitLeft <= 5 && timeWaitLeft > 0) {
             for (Player player : playerList) {
-                player.sendMessage(Utils.coloredString("&fGame starting in &4" + timeWaitLeft + " &fseconds!"));
-                player.sendTitle(Utils.coloredString("&4&l" + timeWaitLeft), "", 0, 20, 10);
+                player.sendMessage(util.translate("&eThe game starts in &c" + timeWaitLeft + " &eseconds!"));
+                player.sendTitle(util.translate("&c&l" + timeWaitLeft), "", 0, 20, 10);
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
@@ -152,7 +156,7 @@ public class Queue {
 
             if (playerList.size() < 2) {
                 for (int i = 0; i < playerList.size(); i++) {
-                    playerList.get(i).sendMessage(Utils.coloredString("Game didn't start due to not enough players!"));
+                    playerList.get(i).sendMessage(util.translate("Game didn't start due to not enough players!"));
                 }
                 timeWaitLeft = 240;
                 return;
@@ -160,6 +164,7 @@ public class Queue {
             if (playerList.size() > 1) {
 
                 Main.getGame().startGame();
+                Main.setQueue(null);
 
             }
         }

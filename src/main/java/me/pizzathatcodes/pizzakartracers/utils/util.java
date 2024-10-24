@@ -1,10 +1,18 @@
 package me.pizzathatcodes.pizzakartracers.utils;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.MinecraftKey;
+import com.viaversion.viaversion.api.Via;
+import com.viaversion.viaversion.api.ViaAPI;
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
@@ -118,6 +126,41 @@ public class util {
     }
 
 
+    public static void sendCustomSound(Player player, String sound) {
+        ProtocolManager protocolManager = Main.getProtocolManager();
+
+        // Get player location
+        Location location = player.getLocation();
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        // Create a new packet for the sound effect (PacketPlayOutNamedSoundEffect equivalent)
+        PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.NAMED_SOUND_EFFECT);
+        packet.getModifier().writeDefaults();
+        // Setting the sound (Converting Bukkit Sound to Minecraft Key)
+        packet.getStrings().write(0, sound); // Replace with appropriate sound
+        packet.getSoundCategories().write(0, EnumWrappers.SoundCategory.MASTER); // Replace with appropriate SoundCategory
+
+        // Set position and other parameters
+        packet.getIntegers()
+                .write(0, (int) (x * 8.0)) // Minecraft uses fixed-point (x*8)
+                .write(1, (int) (y * 8.0))
+                .write(2, (int) (z * 8.0));
+
+        packet.getFloat()
+                .write(0, 1f)  // volume
+                .write(1, 1f); // pitch
+
+        // Send the packet to the player
+        try {
+            protocolManager.sendServerPacket(player, packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public static void handleSidewayMovement(Player player, float sideways) {
         GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUniqueId());
         if (gamePlayer == null) return;
@@ -128,24 +171,6 @@ public class util {
 
         // Determine if player is turning
         if (sideways != 0) {
-
-
-            if(gamePlayer.getKart().acceleration > 0) {
-                if(gamePlayer.getKart().tiltDelay == 0) {
-                    gamePlayer.getKart().tiltDelay = 2;
-                    gamePlayer.getKart().acceleration -= 1;
-                } else if (gamePlayer.getKart().tiltDelay > 0) {
-                    gamePlayer.getKart().tiltDelay--;
-                }
-            }
-            else if(gamePlayer.getKart().acceleration < 0) {
-                if(gamePlayer.getKart().tiltDelay == 0) {
-                    gamePlayer.getKart().tiltDelay = 2;
-                    gamePlayer.getKart().acceleration += 1;
-                } else if (gamePlayer.getKart().tiltDelay > 0) {
-                    gamePlayer.getKart().tiltDelay--;
-                }
-            }
 
             float newSideways = sideways < 0 ? -1f : 1f;
 

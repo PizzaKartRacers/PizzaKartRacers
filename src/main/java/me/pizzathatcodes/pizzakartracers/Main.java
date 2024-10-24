@@ -5,6 +5,7 @@ import cloud.timo.TimoCloud.api.objects.ServerGroupObject;
 import cloud.timo.TimoCloud.api.objects.ServerObject;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
@@ -48,6 +49,10 @@ public final class Main extends JavaPlugin {
         return slimeworksAPI;
     }
 
+    public static ProtocolManager getProtocolManager() {
+        return ProtocolLibrary.getProtocolManager();
+    }
+
     public static Main getInstance() {
         return instance;
     }
@@ -60,6 +65,10 @@ public final class Main extends JavaPlugin {
 
     public static Queue getQueue() {
         return queue;
+    }
+
+    public static void setQueue(Queue queue) {
+        Main.queue = queue;
     }
 
     public static mapSystem map;
@@ -108,6 +117,7 @@ public final class Main extends JavaPlugin {
             int highDelay = 0;
             @Override
             public void onPacketReceiving(PacketEvent event) {
+                if(game.getStatus().equalsIgnoreCase("starting")) return;
                 Player player = event.getPlayer();
                 if (player.getVehicle() instanceof ArmorStand) {
                     float forward = event.getPacket().getFloat().read(1);
@@ -118,85 +128,29 @@ public final class Main extends JavaPlugin {
                         float newSideways = sideways < 0 ? -1f : 1f;
                         float newYaw = gamePlayer.getKart().getKartEntity().getLocation().getYaw() + (newSideways * -7.5f);  // Adjust yaw based on sideways input
                         gamePlayer.getKart().yaw = newYaw;
-//                        player.sendMessage("Yaw: " + newYaw);
-                        if(gamePlayer.getKart().rotationTask == null) {
-                            gamePlayer.getKart().rotationTask = new BukkitRunnable() {
-                                @Override
-                                public void run() {
-//                                    player.sendMessage("Yaw: " + gamePlayer.getKart().yaw);
-                                    gamePlayer.getKart().getKartEntity().setRotation(gamePlayer.getKart().yaw, 0);  // Rotate the armor stand
-                                }
-                            }.runTaskTimer(Main.getInstance(), 0, 1);
-                        }
+
+                        gamePlayer.getKart().getKartEntity().setRotation(gamePlayer.getKart().yaw, 0);  //
                     }
                     util.handleSidewayMovement(player, sideways);
 
-                    // Handle forward movement (acceleration)
-                    if (forward > 0) { // Going forward
-                        if(delay == 0 && gamePlayer.getKart().getAcceleration() > 45) {
-                            delay = 2;
-                        } else if (delay > 0 && gamePlayer.getKart().getAcceleration() > 45) {
-                            delay--;
-                            return;
+                    if(forward != 0) {
+                        if(forward > 0) {
+                            gamePlayer.getKart().moving = "forward";
+                        } else {
+                            gamePlayer.getKart().moving = "backward";
                         }
-                        if (gamePlayer.getKart().getAcceleration() < 63 && gamePlayer.getKart().getAcceleration() < 60) {
-                            gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() + 2);
-                        } else if(gamePlayer.getKart().getAcceleration() < 63 && gamePlayer.getKart().getAcceleration() >= 60) {
-                            if(highDelay == 0 && gamePlayer.getKart().getAcceleration() > 60) {
-                                highDelay = 2;
-                            } else if (highDelay > 0 && gamePlayer.getKart().getAcceleration() > 60) {
-                                highDelay--;
-                                return;
-                            }
-                            gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() + 1);
-                        }
-                        // If player is moving, cancel any existing deceleration task
-                        if (gamePlayer.getKart().accelerationTask != null) {
-                            gamePlayer.getKart().accelerationTask.cancel();
-                            gamePlayer.getKart().accelerationTask = null;
-                        }
-                    } else if (forward < 0) { // Going in reverse
-                        if(delay == 0 && gamePlayer.getKart().getAcceleration() < -50) {
-                            delay = 2;
-                        } else if (delay > 0 && gamePlayer.getKart().getAcceleration() < -50) {
-                            delay--;
-                            return;
-                        }
-                        if (gamePlayer.getKart().getAcceleration() > -60 && gamePlayer.getKart().getAcceleration() > -60) {
-                            gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() - 2); // Decrease acceleration
-                        } else if(gamePlayer.getKart().getAcceleration() > -60 && gamePlayer.getKart().getAcceleration() <= -60) {
-                            if(highDelay == 0 && gamePlayer.getKart().getAcceleration() < -60) {
-                                highDelay = 2;
-                            } else if (highDelay > 0 && gamePlayer.getKart().getAcceleration() < -60) {
-                                highDelay--;
-                                return;
-                            }
-                            gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() - 1);
-                        }
-                        // Cancel deceleration task if player is still moving
-                        if (gamePlayer.getKart().accelerationTask != null) {
-                            gamePlayer.getKart().accelerationTask.cancel();
-                            gamePlayer.getKart().accelerationTask = null;
-                        }
-                    } else { // Player has stopped
-                        if (gamePlayer.getKart().accelerationTask == null) { // Only start deceleration if no task is running
-                            gamePlayer.getKart().accelerationTask = new BukkitRunnable() {
-                                @Override
-                                public void run() {
-                                    if (gamePlayer.getKart().getAcceleration() > 0) {
-                                        gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() - 3);
-                                    } else if (gamePlayer.getKart().getAcceleration() < 0) {
-                                        gamePlayer.getKart().setAcceleration(gamePlayer.getKart().getAcceleration() + 3); // Smooth deceleration
-                                    }
+                    } else {
+                        gamePlayer.getKart().moving = "none";
+                    }
 
-                                    if (Math.abs(gamePlayer.getKart().getAcceleration()) <= 2) {
-                                        gamePlayer.getKart().setAcceleration(0);
-                                        cancel(); // Stop the task once the acceleration reaches 0
-                                        gamePlayer.getKart().accelerationTask = null;
-                                    }
-                                }
-                            }.runTaskTimer(Main.getInstance(), 0, 1);
+                    if(sideways != 0) {
+                        if(sideways > 0) {
+                            gamePlayer.getKart().turning = "right";
+                        } else {
+                            gamePlayer.getKart().turning = "left";
                         }
+                    } else {
+                        gamePlayer.getKart().turning = "none";
                     }
 
                 }
@@ -205,6 +159,7 @@ public final class Main extends JavaPlugin {
 
 
         game = new Game();
+        game.setupTasks();
 
         if(map == null || !map.isMapLoading()) {
             map = new mapSystem();

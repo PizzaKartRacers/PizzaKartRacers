@@ -25,7 +25,7 @@ public class queueScoreboard {
                         util.translate("&7" + formattedDate + " &8" + Main.map.map),
                         util.translate(""),
                         util.translate("&fMap: &a" + Main.map.mapName),
-                        util.translate("&fPlayers: &a" + Main.getQueue().getPlayers().size() + "/8"),
+                        util.translate("&fPlayers: &a" + Main.getQueue().getPlayers().size() + "/12"),
                         util.translate(""),
                         util.translate("&fStarting in &a" + ( (Main.getQueue().timeWaitLeft / 60) < 10 ? "0" + (Main.getQueue().timeWaitLeft/60) : (Main.getQueue().timeWaitLeft/60) ) + ":" + ( (Main.getQueue().timeWaitLeft%60) < 10 ? "0" + (Main.getQueue().timeWaitLeft%60) : (Main.getQueue().timeWaitLeft%60) ) + " &fif "),
                         util.translate("&a" + neededAmountOfPlayers + " &fmore player joins"),

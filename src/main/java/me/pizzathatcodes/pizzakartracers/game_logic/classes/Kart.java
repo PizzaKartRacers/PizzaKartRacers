@@ -7,6 +7,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -16,27 +17,26 @@ import java.util.Random;
 public class Kart {
 
     ArmorStand kartEntity;
-    double speed;
     public int acceleration;
     double handling;
-    public BukkitTask accelerationTask;
     public BukkitTask decelerationTask;
     public BukkitTask boostPadTask;
     public int boostPadDelay = 0;
     public BukkitTask bounceTask;
     public BukkitTask tiltTask;
+    public boolean drifting;
     public float yaw;
 
     public String moving;
     public String turning;
 
-    public Kart(double speed, int accelerationvar, double handling) {
-        this.speed = speed;
+    public Kart(int accelerationvar, double handling) {
         this.acceleration = accelerationvar;
         this.handling = handling;
         this.yaw = 0;
         moving = "none";
         turning = "none";
+        this.drifting = false;
 
 
         // TODO: This code is for bounce mechanics, but it causes the karts to not detect slabs in front of them, so it's disabled for now while I work on more important things
@@ -88,14 +88,6 @@ public class Kart {
     }
 
     /**
-     * Set the speed
-     * @param speed the speed to set
-     */
-    public void setSpeed(double speed) {
-        this.speed = speed;
-    }
-
-    /**
      * Set the acceleration
      * @param acceleration the acceleration to set
      */
@@ -109,13 +101,6 @@ public class Kart {
      */
     public void setHandling(double handling) {
         this.handling = handling;
-    }
-
-    /**
-     * @return the speed
-     */
-    public double getSpeed() {
-        return speed;
     }
 
     /**
@@ -148,6 +133,21 @@ public class Kart {
     }
 
     /**
+     * Set the drifting state
+     * @param drifting the drifting to set
+     */
+    public void setDrifting(boolean drifting) {
+        this.drifting = drifting;
+    }
+
+    /**
+     * @return if the kart is drifting
+     */
+    public boolean isDrifting() {
+        return drifting;
+    }
+
+    /**
      * Move the kart based on acceleration and direction
      */
     public void move() {
@@ -172,18 +172,8 @@ public class Kart {
         // Multiply the direction by acceleration to determine the velocity
         Vector velocity = direction.multiply(acceleration * 0.015); // Adjust this factor to control speed
 
-
-        // Get the block directly under the kart (for falling/climbing checks)
         Block blockBelow = loc.clone().add(0, -1, 0).getBlock();
 
-        Location blockInFrontLoc = loc.clone().add(direction.clone().multiply(1));
-        Block blockInFront = blockInFrontLoc.getBlock();
-
-        if(blockInFront.getType().isSolid() && blockInFront.getBoundingBox().getHeight() < 1.0) {
-            velocity.setY(velocity.getY() + 0.7); // Simulate climbing a slab
-        } else if (blockBelow.getType().isAir()) {
-            velocity.setY(velocity.getY() - 1); // Simulate falling if there's no block below
-        }
 
         // Handle vertical movement (falling or staying on the ground)
 
@@ -224,116 +214,74 @@ public class Kart {
      */
     public void boostAcceleration(String type) {
         boostPadDelay = 2;
+        if(boostPadTask != null) return;
+
+        int accelerationIncrement, maxAcceleration, decelerationAmount;
+        int finalAccelerationLimit;
 
         switch (type) {
-            case "SOUTH": {
-                Kart kart = this;
-                boostPadTask = new BukkitRunnable() {
-                    boolean finished = false;
-                    int additionalAcceleration = 0;
-
-                    @Override
-                    public void run() {
-                        if (finished) {
-                            cancel(); // Stop the current task after acceleration finishes
-                            return;
-                        }
-
-                        // Boost the acceleration
-                        if ((additionalAcceleration) < 50) {
-                            acceleration += 3;
-                            additionalAcceleration += 3;
-//                            Main.getInstance().getLogger().info("Acceleration: " + acceleration);
-
-                            spawnBoostParticles();
-
-                            if (additionalAcceleration >= 50) {
-//                                Main.getInstance().getLogger().info("Finished boosting acceleration! At: " + acceleration);
-                                finished = true;
-
-                                // Start the deceleration task
-                                decelerationTask = new BukkitRunnable() {
-                                    @Override
-                                    public void run() {
-//                                        Main.getInstance().getLogger().info("Decelerating... from: " + acceleration);
-
-                                        spawnBoostParticles();
-
-                                        if (acceleration >= 65) {
-                                            acceleration -= 2;
-//                                            Main.getInstance().getLogger().info("Decelerating... to: " + acceleration);
-                                        } else {
-//                                            Main.getInstance().getLogger().info("Deceleration complete at: " + acceleration);
-                                            cancel(); // Stop the deceleration task
-                                            decelerationTask = null;
-                                        }
-                                    }
-                                }.runTaskTimer(Main.getInstance(), 0, 2); // Run deceleration every 3 ticks
-                            }
-                        }
-                    }
-                }.runTaskTimer(Main.getInstance(), 0, 2); // Run acceleration every tick
+            case "SOUTH":
+                accelerationIncrement = 3;
+                maxAcceleration = 50;
+                decelerationAmount = 2;
+                finalAccelerationLimit = 65;
                 break;
-            }
 
-            case "NORTH": {
-                Kart kart = this;
-                boostPadTask = new BukkitRunnable() {
-                    boolean finished = false;
-                    int lastAcceleration = acceleration;
-                    int additionalAcceleration = 0;
-
-                    @Override
-                    public void run() {
-                        if (finished) {
-                            cancel(); // Stop the current task after acceleration finishes
-                            return;
-                        }
-
-                        // Boost the acceleration
-                        if ((lastAcceleration + additionalAcceleration) <= 158) {
-                            acceleration += 10;
-                            additionalAcceleration += 10;
-//                            Main.getInstance().getLogger().info("Acceleration: " + acceleration);
-
-                            if(acceleration >= 80)
-                                spawnBoostParticles();
-
-                            if ((lastAcceleration + additionalAcceleration) >= 154) {
-//                                Main.getInstance().getLogger().info("Finished boosting acceleration! At: " + acceleration);
-                                finished = true;
-
-                                // Start the deceleration task
-                                decelerationTask = new BukkitRunnable() {
-                                    @Override
-                                    public void run() {
-//                                        Main.getInstance().getLogger().info("Decelerating... from: " + acceleration);
-
-                                        if(acceleration >= 80)
-                                            spawnBoostParticles();
-
-                                        if (acceleration >= 65) {
-                                            acceleration -= 3;
-//                                            Main.getInstance().getLogger().info("Decelerating... to: " + acceleration);
-                                        } else {
-//                                            Main.getInstance().getLogger().info("Deceleration complete at: " + acceleration);
-                                            cancel(); // Stop the deceleration task
-                                            decelerationTask = null;
-                                        }
-                                    }
-                                }.runTaskTimer(Main.getInstance(), 0, 2); // Run deceleration every 3 ticks
-                            }
-                        }
-                    }
-                }.runTaskTimer(Main.getInstance(), 0, 2); // Run acceleration every tick
+            case "NORTH":
+                accelerationIncrement = 10;
+                maxAcceleration = 90;
+                decelerationAmount = 3;
+                finalAccelerationLimit = 65;
                 break;
-            }
 
             default:
-                break;
+                return;
         }
 
+        boostPadTask = new BukkitRunnable() {
+            boolean finished = false;
+            int additionalAcceleration = 0;
+
+            @Override
+            public void run() {
+                if (finished) {
+                    cancel();
+                    boostPadTask = null;
+                    return;
+                }
+
+                // Boost the acceleration
+                if (additionalAcceleration < maxAcceleration) {
+                    acceleration += accelerationIncrement;
+                    additionalAcceleration += accelerationIncrement;
+                    if (acceleration >= 80 || type.equals("SOUTH")) {
+                        spawnBoostParticles();
+                    }
+
+                    if (additionalAcceleration >= maxAcceleration) {
+                        finished = true;
+
+                        // Start the deceleration task
+                        decelerationTask = new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                if (acceleration >= finalAccelerationLimit) {
+                                    acceleration -= decelerationAmount;
+                                    if (acceleration >= 80 || type.equals("SOUTH")) {
+                                        spawnBoostParticles();
+                                    }
+                                } else {
+                                    cancel();
+                                    decelerationTask = null;
+                                }
+                            }
+                        }.runTaskTimer(Main.getInstance(), 0, 2); // Decelerate every 3 ticks
+                    }
+                }
+            }
+        }.runTaskTimer(Main.getInstance(), 0, 2); // Accelerate every tick
     }
+
 
     boolean spawningBoostParticles = false;
 
@@ -386,10 +334,6 @@ public class Kart {
      * Stop all tasks related to the kart
      */
     public void stopAllTasks() {
-        if(accelerationTask != null) {
-            accelerationTask.cancel();
-            accelerationTask = null;
-        }
         if(decelerationTask != null) {
             decelerationTask.cancel();
             decelerationTask = null;

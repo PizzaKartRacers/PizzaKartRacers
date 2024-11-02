@@ -113,8 +113,6 @@ public final class Main extends JavaPlugin {
         getQueue().registerQueueEvents();
 
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Client.STEER_VEHICLE) {
-            int delay = 0;
-            int highDelay = 0;
             @Override
             public void onPacketReceiving(PacketEvent event) {
                 if(game.getStatus().equalsIgnoreCase("starting")) return;
@@ -126,7 +124,7 @@ public final class Main extends JavaPlugin {
                     if(gamePlayer == null) return;
                     if(sideways != 0) {
                         float newSideways = sideways < 0 ? -1f : 1f;
-                        float newYaw = gamePlayer.getKart().getKartEntity().getLocation().getYaw() + (newSideways * -7.5f);  // Adjust yaw based on sideways input
+                        float newYaw = gamePlayer.getKart().getKartEntity().getLocation().getYaw() + (newSideways * -7);  // Adjust yaw based on sideways input
                         gamePlayer.getKart().yaw = newYaw;
 
                         gamePlayer.getKart().getKartEntity().setRotation(gamePlayer.getKart().yaw, 0);  //

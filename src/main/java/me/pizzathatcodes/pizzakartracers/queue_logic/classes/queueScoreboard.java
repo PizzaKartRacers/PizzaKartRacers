@@ -28,7 +28,7 @@ public class queueScoreboard {
                         util.translate("&fPlayers: &a" + Main.getQueue().getPlayers().size() + "/12"),
                         util.translate(""),
                         util.translate("&fStarting in &a" + ( (Main.getQueue().timeWaitLeft / 60) < 10 ? "0" + (Main.getQueue().timeWaitLeft/60) : (Main.getQueue().timeWaitLeft/60) ) + ":" + ( (Main.getQueue().timeWaitLeft%60) < 10 ? "0" + (Main.getQueue().timeWaitLeft%60) : (Main.getQueue().timeWaitLeft%60) ) + " &fif "),
-                        util.translate("&a" + neededAmountOfPlayers + " &fmore player joins"),
+                        util.translate("&a" + neededAmountOfPlayers + " &fmore " + (neededAmountOfPlayers > 1 ? "players join" : "player joins")),
                         util.translate(""),
                         util.translate("&eslimeworks.net")
                 );

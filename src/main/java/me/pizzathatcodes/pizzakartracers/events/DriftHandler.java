@@ -17,13 +17,12 @@ public class DriftHandler implements Listener {
         if (gamePlayer == null) return;
         event.setCancelled(true);
 
-//        if (event.isSneaking() && !gamePlayer.getKart().isDrifting) {
-//            // Start drifting if allowed
-//            gamePlayer.getKart().startDrift(player);
-//        } else {
-//            // Stop drifting if the player stops sneaking
-//            gamePlayer.getKart().stopDrift(player);
-//        }
+        if(event.isSneaking()) {
+            gamePlayer.getKart().setDrifting(true);
+        } else {
+            gamePlayer.getKart().setDrifting(false);
+        }
+
     }
 
 }

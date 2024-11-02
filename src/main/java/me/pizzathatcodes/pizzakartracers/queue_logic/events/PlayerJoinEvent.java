@@ -78,7 +78,7 @@ public class PlayerJoinEvent implements Listener {
 
                     GamePlayer gamePlayer = new GamePlayer(
                             player.getUniqueId(),
-                            new Kart(0, 0, 0),
+                            new Kart(0, 0),
                             board
                     );
 

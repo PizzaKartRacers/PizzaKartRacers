@@ -164,7 +164,7 @@ public final class Main extends JavaPlugin {
             map.loadMap();
         }
 
-        getLogger().info("FormulaKartRacers has been enabled!");
+        getLogger().info("PizzaKartRacers has been enabled!");
 
 
         ServerObject server = TimoCloudAPI.getBukkitAPI().getThisServer();
@@ -198,26 +198,29 @@ public final class Main extends JavaPlugin {
             getLogger().info("Removed player " + gamePlayer.getUuid());
         }
 
-        for(Player player : Bukkit.getOnlinePlayers()) {
-            for(ServerObject goober_lobby : TimoCloudAPI.getUniversalAPI().getServerGroup("Lobby").getServers()) {
-                if(goober_lobby.getOnlinePlayerCount() < goober_lobby.getMaxPlayerCount()) {
-                    TimoCloudAPI.getUniversalAPI().getPlayer(player.getUniqueId()).sendToServer(goober_lobby);
-                    break;
+        if(getServer().getPluginManager().getPlugin("TimoCloud") != null) {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                for (ServerObject goober_lobby : TimoCloudAPI.getUniversalAPI().getServerGroup("Lobby").getServers()) {
+                    if (goober_lobby.getOnlinePlayerCount() < goober_lobby.getMaxPlayerCount()) {
+                        TimoCloudAPI.getUniversalAPI().getPlayer(player.getUniqueId()).sendToServer(goober_lobby);
+                        break;
+                    }
                 }
             }
+
+            ServerObject server = TimoCloudAPI.getBukkitAPI().getThisServer();
+            Games_Running games_running = getSlimeworksAPI().getGameRunningDatabase().findGameDataByID(server.getName());
+            if (games_running != null) {
+                getSlimeworksAPI().getGameRunningDatabase().deleteInformation(games_running);
+            }
+            ServerGroupObject pizzakartracers = TimoCloudAPI.getUniversalAPI().getServerGroup("pizzakartracers");
+            if (pizzakartracers.getOnlineAmount() > 0)
+                pizzakartracers.setOnlineAmount(pizzakartracers.getOnlineAmount() - 1);
         }
-
-        ServerObject server = TimoCloudAPI.getBukkitAPI().getThisServer();
-        Games_Running games_running = getSlimeworksAPI().getGameRunningDatabase().findGameDataByID(server.getName());
-        if(games_running != null) {
-            getSlimeworksAPI().getGameRunningDatabase().deleteInformation(games_running);
-        }
-        ServerGroupObject pizzakartracers = TimoCloudAPI.getUniversalAPI().getServerGroup("pizzakartracers");
-        if(pizzakartracers.getOnlineAmount() > 0)
-            pizzakartracers.setOnlineAmount(pizzakartracers.getOnlineAmount() - 1);
+        map.unloadMap();
 
 
-        getLogger().info("FormulaKartRacers has been disabled!");
+        getLogger().info("PizzaKartRacers has been disabled!");
         game = null;
 
 

@@ -6,6 +6,8 @@ author: PizzaThatCodes
 description: A plugin that adds PizzaKartRacers to Minecraft.
 depend:
   - ProtocolLib
+softdepend:
+  - TimoCloud
 commands:
   setTimer:
     description: Set the timer for the game.

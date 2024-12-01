@@ -9,5 +9,8 @@
         <module name="PizzaKartRacers" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="MineStom" target="20" />
+    </bytecodeTargetLevel>
   </component>
 </project>

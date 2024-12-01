@@ -2,15 +2,15 @@ package me.pizzathatcodes.pizzakartracers.queue_logic;
 
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
-import me.pizzathatcodes.pizzakartracers.game_logic.classes.gameScoreboard;
-import me.pizzathatcodes.pizzakartracers.queue_logic.classes.queueScoreboard;
-import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerJoinEvent;
-import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerLeaveEvent;
+import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerLeaveHandler;
+import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerSpawnHandler;
 import me.pizzathatcodes.pizzakartracers.utils.util;
-import org.bukkit.Sound;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.entity.Player;
+import net.minestom.server.event.player.PlayerDisconnectEvent;
+import net.minestom.server.event.player.PlayerSpawnEvent;
+import net.minestom.server.timer.Task;
+import net.minestom.server.timer.TaskSchedule;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -18,7 +18,7 @@ import java.util.Random;
 public class Queue {
 
     public ArrayList<Player> playerList = new ArrayList<>();
-    public BukkitTask timerCountdownTask;
+    public Task timerCountdownTask;
     public int timeWaitLeft;
     public String id;
 
@@ -44,34 +44,16 @@ public class Queue {
         this.timeWaitLeft = 240;
         this.id = generateCode();
 
-        Main.scoreboardTask = new BukkitRunnable() {
-            @Override
-            public void run() {
+        timerCountdownTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+            timeWaitLeft--;
 
-                for(Player player : getPlayers()) {
-                    GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUniqueId());
-                    if(gamePlayer == null) continue;
-                    if(Main.getQueue() != null)
-                        queueScoreboard.updateBoard(gamePlayer.getBoard());
-                    else
-                        gameScoreboard.updateBoard(gamePlayer.getBoard());
-                }
-
+            if (getPlayers().size() <= 1 && timeWaitLeft != 240) {
+                timeWaitLeft = 240;
+                return; // Exit early if conditions are met
             }
-        }.runTaskTimer(Main.getInstance(), 0, 15L);
 
-        timerCountdownTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                timeWaitLeft--;
-                if(getPlayers().size() <= 1 && timeWaitLeft != 240) {
-                    timeWaitLeft = 240;
-                    return;
-                }
-                timer();
-
-            }
-        }.runTaskTimer(Main.getInstance(), 0, 20L);
+            timer();
+        }).repeat(TaskSchedule.tick(20)).schedule(); // Run every 20 ticks (1 second)
     }
 
     public String getID() {
@@ -100,8 +82,8 @@ public class Queue {
 
 
     public void registerQueueEvents() {
-        Main.getInstance().getServer().getPluginManager().registerEvents(new PlayerLeaveEvent(), Main.getInstance());
-        Main.getInstance().getServer().getPluginManager().registerEvents(new PlayerJoinEvent(), Main.getInstance());
+        Main.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, event -> PlayerSpawnHandler.handlePlayerSpawn(event));
+        Main.getGlobalEventHandler().addListener(PlayerDisconnectEvent.class, event -> PlayerLeaveHandler.handlePlayerLeave(event));
     }
 
     public ArrayList<Player> getPlayers() {
@@ -125,21 +107,21 @@ public class Queue {
         if (timeWaitLeft == 30) {
             for (Player player : playerList) {
                 player.sendMessage(util.translate("&eThe game starts in &a30 &eseconds!"));
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+//                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
         if (timeWaitLeft == 20) {
             for (Player player : playerList) {
                 player.sendMessage(util.translate("&eThe game starts in &e20 &eseconds!"));
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+//                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
         if (timeWaitLeft == 10) {
             for (Player player : playerList) {
                 player.sendMessage(util.translate("&eThe game starts in &c10 &eseconds!"));
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+//                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
@@ -147,8 +129,8 @@ public class Queue {
         if (timeWaitLeft <= 5 && timeWaitLeft > 0) {
             for (Player player : playerList) {
                 player.sendMessage(util.translate("&eThe game starts in &c" + timeWaitLeft + " &eseconds!"));
-                player.sendTitle(util.translate("&c&l" + timeWaitLeft), "", 0, 20, 10);
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+//                player.sendTitle(util.translate("&c&l" + timeWaitLeft), "", 0, 20, 10);
+//                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
             }
         }
 
@@ -170,4 +152,5 @@ public class Queue {
         }
 
     }
+
 }

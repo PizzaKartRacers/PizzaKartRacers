@@ -1,34 +1,41 @@
 package me.pizzathatcodes.pizzakartracers.game_logic.classes;
 
 import me.pizzathatcodes.pizzakartracers.Main;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.MultipleFacing;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Vector;
+import me.pizzathatcodes.pizzakartracers.utils.util;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Point;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.instance.Instance;
+import net.minestom.server.instance.block.Block;
+import net.minestom.server.instance.block.BlockHandler;
+import net.minestom.server.item.component.ItemBlockState;
+import net.minestom.server.timer.Task;
+import net.minestom.server.timer.TaskSchedule;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 
 public class Kart {
 
-    ArmorStand kartEntity;
+    LivingEntity kartEntity;
     public int acceleration;
     double handling;
-    public BukkitTask decelerationTask;
-    public BukkitTask boostPadTask;
     public int boostPadDelay = 0;
-    public BukkitTask bounceTask;
-    public BukkitTask tiltTask;
     public boolean drifting;
     public float yaw;
 
     public String moving;
     public String turning;
+
+    public Task boostPadTask;
+    public Task decelerationTask;
+    public Task bounceTask;
+    public Task tiltTask;
+    int additionalAcceleration = 0;
+    boolean finished = false;
+    int bounceTicks = 0; // Use an array to keep track of ticks as lambda requires effectively final variables
 
     public Kart(int accelerationvar, double handling) {
         this.acceleration = accelerationvar;
@@ -37,54 +44,25 @@ public class Kart {
         moving = "none";
         turning = "none";
         this.drifting = false;
-
-
-        // TODO: This code is for bounce mechanics, but it causes the karts to not detect slabs in front of them, so it's disabled for now while I work on more important things
-//        bounceTask = new BukkitRunnable() {
-//            int bounceTicks = 0;
-//            @Override
-//            public void run() {
-//                if (getKartEntity() == null) {
-//                    return;
-//                }
+//        bounceTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
 //
-//                Vector currentVelocity = getKartEntity().getVelocity();
+//            // Retrieve current velocity
+//            Vec currentVelocity = kartEntity.getVelocity();
 //
-//                // Gradually go up and down using a sine wave to simulate smooth bouncing
-//                double bounceHeight = 0.05; // Max bounce height (0.5 total up and down movement)
-//                double frequency = 0.1;     // How fast the bounce oscillates
+//            // Gradually go up and down using a sine wave to simulate smooth bouncing
+//            double bounceHeight = 0.5; // Max bounce height (0.5 total up and down movement)
+//            double frequency = 0.1;     // How fast the bounce oscillates
 //
-//                // Calculate the new Y-velocity based on the sine wave
-//                double yVelocity = Math.sin(bounceTicks * frequency) * bounceHeight;
+//            // Calculate the new Y-velocity based on the sine wave
+//            double yVelocity = Math.sin(bounceTicks * frequency) * bounceHeight;
 //
-//                Location loc = getKartEntity().getLocation();
-//                float yaw = loc.getYaw();  // Yaw is in degrees
+//            // Set the new Y-velocity while keeping the horizontal velocity unchanged
+//            Vec newVelocity = currentVelocity.withY(yVelocity);
+//            kartEntity.setVelocity(newVelocity);
 //
-//                // Convert yaw to radians for trigonometry calculations
-//                double radiansYaw = Math.toRadians(yaw);
-//
-//                Vector direction = new Vector(-Math.sin(radiansYaw), 0, Math.cos(radiansYaw));
-//                direction.normalize();
-//
-//                Location blockInFrontLoc = loc.clone().add(direction.clone().multiply(1));
-//                Block blockInFront = blockInFrontLoc.getBlock();
-//
-//                Block blockBelow = loc.clone().add(0, -1, 0).getBlock();
-//
-//                if(blockInFront.getType().isSolid() && blockInFront.getBoundingBox().getHeight() < 1.0) {
-//                    yVelocity += 0.7; // Simulate climbing a slab
-//                } else if (blockBelow.getType().isAir()) {
-//                    yVelocity -= 1; // Simulate falling if there's no block below
-//                }
-//
-//                // Set the new Y-velocity while keeping the horizontal velocity unchanged
-//                Vector newVelocity = currentVelocity.clone().setY(yVelocity);
-//                getKartEntity().setVelocity(newVelocity);
-//
-//                // Increment the bounce ticks for the next step
-//                bounceTicks++;
-//            }
-//        }.runTaskTimer(Main.getInstance(), 0L, 1L); // Run every tick (20 times per second)
+//            // Increment the bounce ticks for the next step
+//            bounceTicks++;
+//        }).repeat(TaskSchedule.tick(1)).schedule(); // Run every tick (20 times per second)
     }
 
     /**
@@ -120,7 +98,7 @@ public class Kart {
     /**
      * @return the kartEntity
      */
-    public ArmorStand getKartEntity() {
+    public LivingEntity getKartEntity() {
         return kartEntity;
     }
 
@@ -128,7 +106,7 @@ public class Kart {
      * Set the kartEntity
      * @param kartEntity the kartEntity to set
      */
-    public void setKartEntity(ArmorStand kartEntity) {
+    public void setKartEntity(LivingEntity kartEntity) {
         this.kartEntity = kartEntity;
     }
 
@@ -151,17 +129,17 @@ public class Kart {
      * Move the kart based on acceleration and direction
      */
     public void move() {
-        ArmorStand armorStand = getKartEntity();
-        Location loc = armorStand.getLocation();
+        LivingEntity armorStand = getKartEntity();
+        Pos loc = armorStand.getPosition();
 
         // Get the yaw (horizontal rotation) of the ArmorStand
-        float yaw = loc.getYaw();  // Yaw is in degrees
+        float yaw = loc.yaw();  // Yaw is in degrees
 
         // Convert yaw to radians for trigonometry calculations
         double radiansYaw = Math.toRadians(yaw);
 
         // Calculate the forward direction vector based on yaw
-        Vector direction = new Vector(-Math.sin(radiansYaw), 0, Math.cos(radiansYaw));
+        Vec direction = new Vec(-Math.sin(radiansYaw), 0, Math.cos(radiansYaw));
 
 //        GamePlayer gamePlayer = Main.getGame().findGamePlayerFromKart(this);
 //        Player player = Bukkit.getPlayer(gamePlayer.getUuid());
@@ -170,32 +148,36 @@ public class Kart {
         direction.normalize();
 
         // Multiply the direction by acceleration to determine the velocity
-        Vector velocity = direction.multiply(acceleration * 0.015); // Adjust this factor to control speed
+        Vec velocity = direction.mul(acceleration * 0.28); // Adjust this factor to control speed
 
-        Block blockBelow = loc.clone().add(0, -1, 0).getBlock();
+        Instance instance = kartEntity.getInstance(); // Replace with your instance source
 
 
         // Handle vertical movement (falling or staying on the ground)
 
-        if(blockBelow.getType() == Material.BROWN_MUSHROOM_BLOCK) {
-            // Get the BlockData for the brown mushroom block
-            BlockData data = blockBelow.getBlockData();
-            if(data instanceof MultipleFacing) {
-//                Main.getInstance().getLogger().info("Found a mushroom block!");
-                MultipleFacing mushroomData = (MultipleFacing) data;
-                // Check for the SOUTH_WEST or SOUTH_EAST varient
-//                Main.getInstance().getLogger().info("Faces: " + mushroomData.getFaces());
-                if(mushroomData.getFaces().contains(BlockFace.SOUTH) && (mushroomData.getFaces().contains(BlockFace.WEST) || mushroomData.getFaces().contains(BlockFace.EAST)) && mushroomData.getFaces().contains(BlockFace.UP)) {
-//                    Main.getInstance().getLogger().info("Boosting acceleration!");
-                    // Boost the player's acceleration if the conditions are met
-                    if(boostPadDelay == 0)
-                        boostAcceleration("SOUTH");
+        Point blockBelowPosition = util.copyPosition(loc).add(0, -1, 0);
+        Block blockBelow = instance.getBlock(blockBelowPosition);
+
+// Check if the block is a Brown Mushroom Block
+        if (blockBelow.compare(Block.BROWN_MUSHROOM_BLOCK)) {
+            // Retrieve block states (similar to faces in MultipleFacing)
+            String south = blockBelow.getProperty("south");
+            String north = blockBelow.getProperty("north");
+            String west = blockBelow.getProperty("west");
+            String east = blockBelow.getProperty("east");
+            String up = blockBelow.getProperty("up");
+
+            if ("true".equals(south) && ("true".equals(west) || "true".equals(east)) && "true".equals(up)) {
+                // Boost acceleration for SOUTH
+                if (boostPadDelay == 0) {
+                    boostAcceleration("SOUTH");
                 }
-                if(mushroomData.getFaces().contains(BlockFace.NORTH) && (mushroomData.getFaces().contains(BlockFace.WEST) || mushroomData.getFaces().contains(BlockFace.EAST)) && mushroomData.getFaces().contains(BlockFace.UP)) {
-//                    Main.getInstance().getLogger().info("Boosting acceleration!");
-                    // Boost the player's acceleration if the conditions are met
-                    if(boostPadDelay == 0)
-                        boostAcceleration("NORTH");
+            }
+
+            if ("true".equals(north) && ("true".equals(west) || "true".equals(east)) && "true".equals(up)) {
+                // Boost acceleration for NORTH
+                if (boostPadDelay == 0) {
+                    boostAcceleration("NORTH");
                 }
             }
         }
@@ -213,74 +195,72 @@ public class Kart {
      * @param type the type of boost (e.g., "SOUTH" or "NORTH")
      */
     public void boostAcceleration(String type) {
-        boostPadDelay = 2;
-        if(boostPadTask != null) return;
+        if (boostPadTask != null) {
+            return;
+        }
 
-        int accelerationIncrement, maxAcceleration, decelerationAmount;
-        int finalAccelerationLimit;
+        boostPadDelay = 2;
+
+        int accelerationIncrement, maxAcceleration, decelerationAmount, finalAccelerationLimit;
 
         switch (type) {
             case "SOUTH":
                 accelerationIncrement = 3;
                 maxAcceleration = 50;
-                decelerationAmount = 2;
+                decelerationAmount = 3;
                 finalAccelerationLimit = 65;
                 break;
-
             case "NORTH":
                 accelerationIncrement = 10;
                 maxAcceleration = 90;
                 decelerationAmount = 3;
                 finalAccelerationLimit = 65;
                 break;
-
             default:
+                System.out.println("Invalid boost type: " + type);
                 return;
         }
 
-        boostPadTask = new BukkitRunnable() {
-            boolean finished = false;
-            int additionalAcceleration = 0;
+        // Reset state variables
+        additionalAcceleration = 0;
+        finished = false;
 
-            @Override
-            public void run() {
-                if (finished) {
-                    cancel();
-                    boostPadTask = null;
-                    return;
+        // Schedule the boost task
+        boostPadTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+            if (!finished && additionalAcceleration < maxAcceleration) {
+                acceleration += accelerationIncrement;
+                additionalAcceleration += accelerationIncrement;
+
+                if (acceleration >= 80 || type.equals("SOUTH")) {
+                    spawnBoostParticles();
                 }
 
-                // Boost the acceleration
-                if (additionalAcceleration < maxAcceleration) {
-                    acceleration += accelerationIncrement;
-                    additionalAcceleration += accelerationIncrement;
-                    if (acceleration >= 80 || type.equals("SOUTH")) {
-                        spawnBoostParticles();
-                    }
+                if (additionalAcceleration >= maxAcceleration) {
+                    finished = true;
 
-                    if (additionalAcceleration >= maxAcceleration) {
-                        finished = true;
-
-                        // Start the deceleration task
-                        decelerationTask = new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                if (acceleration >= finalAccelerationLimit) {
-                                    acceleration -= decelerationAmount;
-                                    if (acceleration >= 80 || type.equals("SOUTH")) {
-                                        spawnBoostParticles();
-                                    }
-                                } else {
-                                    cancel();
-                                    decelerationTask = null;
-                                }
+                    // Start the deceleration task
+                    decelerationTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+                        if (acceleration > finalAccelerationLimit) {
+                            acceleration -= decelerationAmount;
+                            if (acceleration >= 80 || type.equals("SOUTH")) {
+                                spawnBoostParticles();
                             }
-                        }.runTaskTimer(Main.getInstance(), 0, 2); // Decelerate every 3 ticks
-                    }
+                        } else {
+                            decelerationTask.cancel();
+                            decelerationTask = null;
+                        }
+                    }).repeat(TaskSchedule.tick(2)).schedule();
                 }
+            } else {
+                // Reset the boost task and state
+                boostPadTask.cancel();
+                boostPadTask = null;
+                finished = false;
+                additionalAcceleration = 0;
             }
-        }.runTaskTimer(Main.getInstance(), 0, 2); // Accelerate every tick
+        }).repeat(TaskSchedule.tick(2)).schedule();
     }
+
 
 
     boolean spawningBoostParticles = false;
@@ -293,14 +273,13 @@ public class Kart {
             return;
         }
         spawningBoostParticles = true;
-        Location loc = kartEntity.getLocation();
-        World world = loc.getWorld();
+        Pos loc = kartEntity.getPosition();
 
         // Clone location and adjust it to be behind the entity
-        Location behind = loc.clone();
+        Pos behind = util.copyPosition(loc);
 
         // Get the yaw in radians
-        double yaw = Math.toRadians(loc.getYaw());
+        double yaw = Math.toRadians(loc.yaw());
 
         // Calculate the offset behind the player using trigonometry
         double xOffset = -Math.sin(yaw) * -1.7;
@@ -322,10 +301,10 @@ public class Kart {
             int zoffset = random.nextInt(3) - 1;
 
             // Create DustOptions with random color and size
-            Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(r, g, b), 1);
+//            Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(r, g, b), 1);
 
             // Spawn the particle at the given location
-            world.spawnParticle(Particle.REDSTONE, behind.clone().add(xoffset, 2, zoffset), 50, 3, 3, 3, dustOptions);
+//            world.spawnParticle(Particle.REDSTONE, util.copyPosition(behind).add(xoffset, 2, zoffset), 50, 3, 3, 3, dustOptions);
         }
         spawningBoostParticles = false;
     }

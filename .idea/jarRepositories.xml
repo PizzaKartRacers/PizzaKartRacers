@@ -2,24 +2,9 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
-      <option name="id" value="catcoder-snapshots" />
-      <option name="name" value="catcoder-snapshots" />
-      <option name="url" value="https://catcoder.pl.ua/snapshots" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="sonatype" />
-      <option name="name" value="sonatype" />
-      <option name="url" value="https://oss.sonatype.org/content/groups/public/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="pizza-repositories" />
-      <option name="name" value="Pizza's Repositories" />
-      <option name="url" value="https://maven.pizzalover.tech/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />
@@ -27,59 +12,9 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="papermc" />
-      <option name="name" value="papermc" />
-      <option name="url" value="https://repo.papermc.io/repository/maven-public/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="sk89q-repo" />
-      <option name="name" value="sk89q-repo" />
-      <option name="url" value="https://maven.enginehub.org/repo/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="viaversion-repo" />
-      <option name="name" value="viaversion-repo" />
-      <option name="url" value="https://repo.viaversion.com" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="fren_gor" />
-      <option name="name" value="fren_gor" />
-      <option name="url" value="https://nexus.frengor.com/repository/public/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="xenondevs" />
-      <option name="name" value="xenondevs" />
-      <option name="url" value="https://repo.xenondevs.xyz/releases" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="MG-Dev Jenkins CI Maven Repository" />
-      <option name="name" value="MG-Dev Jenkins CI Maven Repository" />
-      <option name="url" value="https://ci.mg-dev.eu/plugin/repository/everything" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="neziw-repo" />
-      <option name="name" value="neziw-repo" />
-      <option name="url" value="https://repo.neziw.xyz/releases" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="spigotmc-repo" />
-      <option name="name" value="spigotmc-repo" />
-      <option name="url" value="https://hub.spigotmc.org/nexus/content/repositories/snapshots/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="dmulloy2-repo" />
-      <option name="name" value="dmulloy2-repo" />
-      <option name="url" value="https://repo.dmulloy2.net/repository/public/" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="jboss.community" />
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="pizza-repositories-private" />
-      <option name="name" value="Pizza's Repositories" />
-      <option name="url" value="https://maven.pizzalover.tech/private" />
     </remote-repository>
   </component>
 </project>

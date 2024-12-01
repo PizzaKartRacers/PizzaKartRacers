@@ -1,12 +1,13 @@
 package me.pizzathatcodes.pizzakartracers.game_logic.classes;
 
-import fr.mrmicky.fastboard.FastBoard;
-import me.pizzathatcodes.pizzakartracers.utils.util;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.*;
-import org.bukkit.inventory.ItemStack;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.entity.EntityType;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
+import net.minestom.server.entity.metadata.other.ArmorStandMeta;
+import net.minestom.server.item.ItemStack;
+import net.minestom.server.item.Material;
 
 import java.util.UUID;
 
@@ -14,18 +15,20 @@ public class GamePlayer {
 
     UUID uuid;
     Kart kart;
-    FastBoard board;
-    double driftDelay;
     String item;
-
     int lap;
 
-    public GamePlayer(UUID uuid, Kart kart, FastBoard board) {
+
+    /**
+     * Constructor for GamePlayer
+     * @param uuid the UUID of the player
+     * @param kart the kart the player is using
+     */
+    public GamePlayer(UUID uuid, Kart kart) {
         this.uuid = uuid;
         this.kart = kart;
         this.lap = 1;
-        this.board = board;
-        this.item = util.translate("&7none");
+        this.item = "none";
     }
 
     /**
@@ -74,22 +77,6 @@ public class GamePlayer {
     }
 
     /**
-     * Get the player's scoreboard
-     * @return the player's scoreboard
-     */
-    public FastBoard getBoard() {
-        return board;
-    }
-
-    /**
-     * Set the player's scoreboard
-     * @param board the scoreboard to set
-     */
-    public void setBoard(FastBoard board) {
-        this.board = board;
-    }
-
-    /**
      * Get the player's item
      * @return the player's item
      */
@@ -106,25 +93,23 @@ public class GamePlayer {
     }
 
     public void createKart() {
-        Player player = Bukkit.getPlayer(getUuid());
-        Location loc = player.getLocation();
-        ArmorStand armorStand = loc.getWorld().spawn(loc.clone().subtract(0, 0, 0), ArmorStand.class);
 
-        // Make the armor stand invisible and not affected by gravity
-        armorStand.setVisible(false);
-        armorStand.setGravity(true);
+        Player player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(getUuid());
+        Pos loc = player.getPosition();
+        ItemStack jukeboxItem = ItemStack.of(Material.JUKEBOX);
 
-        // Create a Jukebox ItemStack
-        ItemStack jukebox = new ItemStack(Material.JUKEBOX);
+        LivingEntity kart1 = new LivingEntity(EntityType.ARMOR_STAND);
+        kart1.setInstance(player.getInstance());
+        kart1.setHelmet(jukeboxItem);
+        kart1.teleport(loc);
+        kart1.spawn();
+        kart1.addPassenger(player);
+        kart1.setInvisible(true);
+        kart1.setNoGravity(false);
 
-        // Set the jukebox as the helmet (on the armor stand's head)
-        armorStand.getEquipment().setHelmet(jukebox);
-
-        getKart().kartEntity = armorStand;
-
-        if(player.getVehicle() == null) {
-            getKart().getKartEntity().setPassenger(player);
-        }
+        getKart().kartEntity = kart1;
 
     }
+
+
 }

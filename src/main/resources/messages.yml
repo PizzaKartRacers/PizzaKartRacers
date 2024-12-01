@@ -1,6 +1,0 @@
-general:
-  prefix: "&8[&6&lPKR&8] &r"
-  no-console: "%prefix% You can't use this command in console!"
-
-game:
-  already-in-game: "%prefix% You are already in a game!"

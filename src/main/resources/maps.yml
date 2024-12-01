@@ -1,7 +1,7 @@
 Maps:
   Retro:
     mapFileName: retro
-    enabled: true
+    enabled: false
     queue:
       spawn-locations:
         1:
@@ -138,3 +138,130 @@ Maps:
           z: 157.5
           pitch: 0
           yaw: -180
+  Canyon:
+    mapFileName: canyon
+    enabled: true
+    queue:
+      spawn-locations:
+        1:
+          x: 252.5
+          y: 7
+          z: 159.5
+          pitch: 0
+          yaw: -180
+        2:
+          x: 255.5
+          y: 7
+          z: 159.5
+          pitch: 0
+          yaw: -180
+        3:
+          x: 258.5
+          y: 7
+          z: 159.5
+          pitch: 0
+          yaw: -180
+        4:
+          x: 261.5
+          y: 7
+          z: 159.5
+          pitch: 0
+          yaw: -180
+        5:
+          x: 252.5
+          y: 7
+          z: 162.5
+          pitch: 0
+          yaw: -180
+        6:
+          x: 255.5
+          y: 7
+          z: 162.5
+          pitch: 0
+          yaw: -180
+        7:
+          x: 258.5
+          y: 7
+          z: 162.5
+          pitch: 0
+          yaw: -180
+        8:
+          x: 261.5
+          y: 7
+          z: 162.5
+          pitch: 0
+          yaw: -180
+    game:
+      spawn-locations:
+        1:
+          x: 313.5
+          y: 7
+          z: 282.5
+          pitch: 0
+          yaw: 90
+        2:
+          x: 313.5
+          y: 7
+          z: 276.5
+          pitch: 0
+          yaw: 90
+        3:
+          x: 313.5
+          y: 7
+          z: 267.5
+          pitch: 0
+          yaw: 90
+        4:
+          x: 313.5
+          y: 7
+          z: 262.5
+          pitch: 0
+          yaw: 90
+        5:
+          x: 318.5
+          y: 7
+          z: 282.5
+          pitch: 0
+          yaw: 90
+        6:
+          x: 318.5
+          y: 7
+          z: 276.5
+          pitch: 0
+          yaw: 90
+        7:
+          x: 318.5
+          y: 7
+          z: 267.5
+          pitch: 0
+          yaw: 90
+        8:
+          x: 318.5
+          y: 7
+          z: 262.5
+          pitch: 0
+          yaw: 90
+        9:
+          x: 323.5
+          y: 7
+          z: 282.5
+          pitch: 0
+          yaw: 90
+        10:
+          x: 323.5
+          y: 7
+          z: 276.5
+          pitch: 0
+          yaw: 90
+        11:
+          x: 323.5
+          y: 7
+          z: 267.5
+          pitch: 0
+          yaw: 90
+        12:
+          x: 323.5
+          y: 7
+          z: 262.5
+          pitch: 0
+          yaw: 90

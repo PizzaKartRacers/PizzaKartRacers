@@ -3,37 +3,31 @@ package me.pizzathatcodes.pizzakartracers.game_logic;
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.Kart;
-import me.pizzathatcodes.pizzakartracers.runnables.game.GameStartRunnable;
+import me.pizzathatcodes.pizzakartracers.game_logic.classes.spectatorSystem;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartAccelerationRunnable;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartBoostPadDelayRunnable;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartMovementRunnable;
-import me.pizzathatcodes.pizzakartracers.runnables.kart.KartParticleRunnable;
 import me.pizzathatcodes.pizzakartracers.utils.util;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Vector;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.Player;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class Game {
 
     private ArrayList<GamePlayer> players;
+    private ArrayList<spectatorSystem> spectators = new ArrayList<>();
     private String status;
+
+//    private ArrayList<spectatorSystem> spectators = new ArrayList<>();
 
     public Game() {
         players = new ArrayList<>();
         status = "waiting";
     }
-
 
 
     public ArrayList<GamePlayer> getPlayers() {
@@ -64,19 +58,36 @@ public class Game {
         this.status = status;
     }
 
+    /**
+     * Get the spectators/dead players
+     * @return the spectators/dead players
+     */
+    public List<spectatorSystem> getSpectators() {
+        return spectators;
+    }
+
+    private boolean isPlayerSpectator(UUID playerUUID) {
+        for (spectatorSystem spe : getSpectators()) {
+            if (spe.getPlayerUUID().equals(playerUUID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void startGame() {
 
         // TODO: Add wait logic so people can't drive off when the game starts
         setStatus("starting");
-        gameStartingLogic();
+//        gameStartingLogic();
 
         for(GamePlayer gamePlayer : players) {
-            Player player = Bukkit.getPlayer(gamePlayer.getUuid());
+            Player player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(gamePlayer.getUuid());
             gamePlayer.getKart().moving = "none";
             gamePlayer.getKart().turning = "none";
             gamePlayer.getKart().setAcceleration(0);
-            gamePlayer.getKart().getKartEntity().setVelocity(new Vector());
-            Main.map.teleportPlayerToGame(player);
+            gamePlayer.getKart().getKartEntity().setVelocity(new Vec(0,0,0));
+            Main.getMapSystem().teleportPlayerToGame(player);
             player.sendMessage(util.translate("&a&l▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"));
             player.sendMessage(util.translate("&f&l                       Pizza Kart Racers                       "));
             player.sendMessage(util.translate("&f&l                                                               "));
@@ -90,26 +101,10 @@ public class Game {
 
     }
 
-
-    public BukkitTask kartMovementTask;
-    public BukkitTask kartBoostPadDelayTask;
-    public BukkitTask kartParticleTask;
-    public BukkitTask kartAccelerationTask;
     public void setupTasks() {
-        // This handles the kart movement
-        kartMovementTask = new KartMovementRunnable().runTaskTimer(Main.getInstance(), 0, 1);
-        // This Handles the boost pad delay
-        kartBoostPadDelayTask = new KartBoostPadDelayRunnable().runTaskTimer(Main.getInstance(), 0, 20);
-        // This handles the kart particle effects
-        kartParticleTask = new KartParticleRunnable().runTaskTimer(Main.getInstance(), 0, 5);
-        // This handles the kart acceleration
-        kartAccelerationTask = new KartAccelerationRunnable().runTaskTimer(Main.getInstance(), 0, 1);
-
-    }
-
-
-    public void gameStartingLogic() {
-        new GameStartRunnable().runTaskTimer(Main.getInstance(), 20 * 8,50);
+        KartMovementRunnable.startTask();
+        KartAccelerationRunnable.startTask();
+        KartBoostPadDelayRunnable.startTask();
     }
 
 }

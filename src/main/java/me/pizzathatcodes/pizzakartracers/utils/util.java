@@ -1,239 +1,174 @@
 package me.pizzathatcodes.pizzakartracers.utils;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.MinecraftKey;
-import com.viaversion.viaversion.api.Via;
-import com.viaversion.viaversion.api.ViaAPI;
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
-import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Minecart;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
+import net.minestom.server.entity.metadata.other.ArmorStandMeta;
+import net.minestom.server.timer.TaskSchedule;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.time.Duration;
 
 public class util {
 
-    private static configManager messageFile;
-    private static configManager mapFile;
-    private static configManager configFile;
-
-    /**
-     * Translate a string with color codes to have colored text (hex supported)
-     * @param message returns a colored string using & (hex supported)
-     * @return
-     */
-    public static String translate(String message) {
-        // TODO: check if server version is 1.16 or above
-        try {
-            Method method = Class.forName("net.md_5.bungee.api.ChatColor").getMethod("of", String.class);
-            message = message.replaceAll("&#",  "#");
-            Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
-            Matcher matcher = pattern.matcher(message);
-
-            while (matcher.find()) {
-                String color = message.substring(matcher.start(), matcher.end());
-                message = message.replace(color, net.md_5.bungee.api.ChatColor.of(color) + "");
-                matcher = pattern.matcher(message);
-            }
-        } catch (Exception e) {
-            // Server version is below 1.16
-            return ChatColor.translateAlternateColorCodes('&', message);
-        }
-        return ChatColor.translateAlternateColorCodes('&', message);
-    }
-
-
-    /**
-     * Get the message file
-     * @return messageFile
-     */
-    public static configManager getMessageFile() {
-        return messageFile;
+    public static Pos copyPosition(Pos original) {
+        return new Pos(
+                original.x(),
+                original.y(),
+                original.z(),
+                original.yaw(),
+                original.pitch()
+        );
     }
 
     /**
-     * Set the message file
-     * @param messageFile
+     * Translates a string with legacy color codes (&) to an Adventure Component.
+     * Supports hex colors in &#RRGGBB format.
+     *
+     * @param message The input string with legacy color codes and hex colors.
+     * @return A Component representing the formatted message.
      */
-    public static void setMessageFile(configManager messageFile) {
-        util.messageFile = messageFile;
+    public static Component translate(String message) {
+        // Use the LegacyComponentSerializer to handle both legacy and hex color codes
+        return LegacyComponentSerializer.builder()
+                .character('&') // Use '&' as the legacy color character
+                .hexColors() // Enable support for &#RRGGBB hex colors
+                .build()
+                .deserialize(message);
     }
-
-    /**
-     * Get the map file
-     * @return mapFile
-     */
-    public static configManager getMapFile() {
-        return mapFile;
-    }
-
-    /**
-     * Set the map file
-     * @param mapFile
-     */
-    public static void setMapFile(configManager mapFile) {
-        util.mapFile = mapFile;
-    }
-
-    /**
-     * Get the config file
-     * @return configFile
-     */
-    public static configManager getConfigFile() {
-        return configFile;
-    }
-
-    /**
-     * Set the config file
-     * @param configFile
-     */
-    public static void setConfigFile(configManager configFile) {
-        util.configFile = configFile;
-    }
-
-    /**
-     * Really janky setup to run a console command without it being logged into console
-     * @param command the command to run
-     * @param world the world to run the command in
-     */
-    public static void runConsoleCommand(String command, World world) {
-        String commandFeedback = world.getGameRuleValue("sendCommandFeedback");
-        String commandBlockOutput = world.getGameRuleValue("commandBlockOutput");
-        world.setGameRuleValue("sendCommandFeedback", "false");
-        world.setGameRuleValue("commandBlockOutput", "false");
-
-        Location location = new Location(world, 0, -320, 0);
-        Minecart minecart = (Minecart) world.spawnEntity(location, EntityType.MINECART);
-        Bukkit.getServer().dispatchCommand(minecart, command);
-
-        world.setGameRuleValue("sendCommandFeedback", commandFeedback);
-        world.setGameRuleValue("commandBlockOutput", commandBlockOutput);
-        minecart.remove();
-    }
-
-
-    public static void sendCustomSound(Player player, String sound) {
-        ProtocolManager protocolManager = Main.getProtocolManager();
-
-        // Get player location
-        Location location = player.getLocation();
-        double x = location.getX();
-        double y = location.getY();
-        double z = location.getZ();
-
-        // Create a new packet for the sound effect (PacketPlayOutNamedSoundEffect equivalent)
-        PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.NAMED_SOUND_EFFECT);
-        packet.getModifier().writeDefaults();
-        // Setting the sound (Converting Bukkit Sound to Minecraft Key)
-        packet.getStrings().write(0, sound); // Replace with appropriate sound
-        packet.getSoundCategories().write(0, EnumWrappers.SoundCategory.MASTER); // Replace with appropriate SoundCategory
-
-        // Set position and other parameters
-        packet.getIntegers()
-                .write(0, (int) (x * 8.0)) // Minecraft uses fixed-point (x*8)
-                .write(1, (int) (y * 8.0))
-                .write(2, (int) (z * 8.0));
-
-        packet.getFloat()
-                .write(0, 1f)  // volume
-                .write(1, 1f); // pitch
-
-        // Send the packet to the player
-        try {
-            protocolManager.sendServerPacket(player, packet);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     public static void handleSidewayMovement(Player player, float sideways) {
-        GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUniqueId());
+        GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUuid());
         if (gamePlayer == null) return;
 
-        ArmorStand armorStand = gamePlayer.getKart().getKartEntity();
-        EulerAngle currentHeadPose = armorStand.getHeadPose();
-        double currentTilt = currentHeadPose.getZ();  // Get the current tilt in radians
+        LivingEntity kartEntity = gamePlayer.getKart().getKartEntity(); // Replace ArmorStand with a generic Minestom entity
+        ArmorStandMeta kartMeta = (ArmorStandMeta) kartEntity.getEntityMeta();
+        Vec currentHeadPose = kartMeta.getHeadRotation(); // Get the current head rotation
 
         // Determine if player is turning
         if (sideways != 0) {
-
             float newSideways = sideways < 0 ? -1f : 1f;
 
             // Calculate the target tilt based on the direction
-            double targetTilt = newSideways < 0 ? Math.toRadians(-15) : Math.toRadians(15);  // Left tilt or right tilt
+            double targetTilt = newSideways < 0 ? -15 : 15; // Left tilt or right tilt (in degrees)
 
-            // Gradually tilt towards the target
+            // Cancel any existing tilt task
             if (gamePlayer.getKart().tiltTask != null) {
-                gamePlayer.getKart().tiltTask.cancel();  // Cancel any existing tilt task
+                gamePlayer.getKart().tiltTask.cancel();
             }
 
-            gamePlayer.getKart().tiltTask = new BukkitRunnable() {
-                final double increment = Math.toRadians(2);  // Control how fast the tilt changes
-                double currentTilt = armorStand.getHeadPose().getZ();  // Start with the current tilt
+            // Schedule a new tilt task
+            gamePlayer.getKart().tiltTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+                final double increment = 2; // Control how fast the tilt changes
+                double currentTilt = kartMeta.getHeadRotation().z(); // Start with the current tilt
 
-                @Override
-                public void run() {
-                    if (Math.abs(currentTilt - targetTilt) < Math.toRadians(1)) {
-                        currentTilt = targetTilt;  // Snap to target tilt when close enough
-                        armorStand.setHeadPose(new EulerAngle(0, 0, currentTilt));  // Update head pose
-                        cancel();  // Stop the task
+                if (Math.abs(currentTilt - targetTilt) < 1) {
+                    currentTilt = targetTilt; // Snap to target tilt when close enough
+                    kartMeta.setHeadRotation(new Vec(0, 0, currentTilt));
+                    kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
+                    gamePlayer.getKart().tiltTask.cancel(); // Stop the task
+                } else {
+                    // Move towards the target tilt gradually
+                    if (currentTilt < targetTilt) {
+                        currentTilt = Math.min(currentTilt + increment, targetTilt); // Increase tilt
                     } else {
-                        // Move towards the target tilt gradually
-                        if (currentTilt < targetTilt) {
-                            currentTilt = Math.min(currentTilt + increment, targetTilt);  // Increase tilt
-                        } else {
-                            currentTilt = Math.max(currentTilt - increment, targetTilt);  // Decrease tilt
-                        }
-                        armorStand.setHeadPose(new EulerAngle(0, 0, currentTilt));  // Update head pose
+                        currentTilt = Math.max(currentTilt - increment, targetTilt); // Decrease tilt
                     }
+                    kartMeta.setHeadRotation(new Vec(0, 0, currentTilt));
+                    kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
                 }
-            }.runTaskTimer(Main.getInstance(), 0L, 2L);  // Run every 2 ticks (adjust as needed)
+            }).repeat(TaskSchedule.tick(2)).schedule(); // Run every 2 ticks
 
         } else {
             // If sideways == 0 (no turning), start resetting the tilt back to 0
             if (gamePlayer.getKart().tiltTask != null) {
-                gamePlayer.getKart().tiltTask.cancel();  // Cancel any existing tilt task
+                gamePlayer.getKart().tiltTask.cancel(); // Cancel any existing tilt task
             }
 
-            gamePlayer.getKart().tiltTask = new BukkitRunnable() {
-                final double decrement = Math.toRadians(2);  // Control how fast the tilt returns to zero
-                double currentTilt = armorStand.getHeadPose().getZ();  // Start with the current tilt
+            gamePlayer.getKart().tiltTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+                final double decrement = 2; // Control how fast the tilt returns to zero
+                double currentTilt = kartMeta.getHeadRotation().z(); // Start with the current tilt
 
-                @Override
-                public void run() {
-                    if (Math.abs(currentTilt) < Math.toRadians(1)) {
-                        armorStand.setHeadPose(new EulerAngle(0, 0, 0));  // Reset to neutral position
-                        cancel();  // Stop the task once it reaches zero
+                if (Math.abs(currentTilt) < 1) {
+                    kartMeta.setHeadRotation(new Vec(0, 0, 0)); // Reset to neutral position
+                    kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
+                    gamePlayer.getKart().tiltTask.cancel(); // Stop the task once it reaches zero
+                } else {
+                    // Move back towards zero tilt
+                    if (currentTilt > 0) {
+                        currentTilt = Math.max(currentTilt - decrement, 0); // Gradually decrease positive tilt
                     } else {
-                        // Move back towards zero tilt
-                        if (currentTilt > 0) {
-                            currentTilt = Math.max(currentTilt - decrement, 0);  // Gradually decrease positive tilt
-                        } else {
-                            currentTilt = Math.min(currentTilt + decrement, 0);  // Gradually increase negative tilt
-                        }
-                        armorStand.setHeadPose(new EulerAngle(0, 0, currentTilt));  // Update head pose
+                        currentTilt = Math.min(currentTilt + decrement, 0); // Gradually increase negative tilt
                     }
+                    kartMeta.setHeadRotation(new Vec(0, 0, currentTilt));
+                    kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
                 }
-            }.runTaskTimer(Main.getInstance(), 0L, 2L);  // Run every 2 ticks (adjust as needed)
+            }).repeat(TaskSchedule.tick(2)).schedule(); // Run every 2 ticks
         }
     }
 
+    /**
+     * Sends a title to the player.
+     *
+     * @param player The player to send the title to.
+     * @param mainTitle The main title text.
+     * @param subtitle The subtitle text.
+     * @param fadeIn Duration (in ticks) for the title to fade in.
+     * @param stay Duration (in ticks) for the title to stay visible.
+     * @param fadeOut Duration (in ticks) for the title to fade out.
+     */
+    public static void sendTitle(Player player, Component mainTitle, Component subtitle, int fadeIn, int stay, int fadeOut) {
+        Title title = Title.title(
+                mainTitle,       // Main title
+                subtitle,       // Subtitle
+                Title.Times.times(
+                        Duration.ofMillis(fadeIn * 50),  // Convert ticks to milliseconds
+                        Duration.ofMillis(stay * 50),
+                        Duration.ofMillis(fadeOut * 50)
+                )
+        );
+        player.showTitle(title);
+    }
 
+    /**
+     * Plays a custom sound for the player.
+     *
+     * @param player    The player to play the sound for.
+     * @param soundName The name of the custom sound (e.g., "custom.sound.name").
+     * @param master   The sound source (e.g., Sound.Source.MASTER).
+     * @param volume    The volume of the sound (1.0 is normal volume).
+     * @param pitch     The pitch of the sound (1.0 is normal pitch).
+     */
+    public static void playCustomSound(Player player, String soundName, Sound.Source master, float volume, float pitch) {
+        String namespace = soundName.split(":")[0];
+        String value = soundName.split(":")[1];
+        player.playSound(
+                Sound.sound(new Key() {
+                    @Override
+                    public @NotNull String namespace() {
+                        return namespace;
+                    }
 
+                    @Override
+                    public @NotNull String value() {
+                        return value;
+                    }
+
+                    @Override
+                    public @NotNull String asString() {
+                        return soundName;
+                    }
+                }, master, volume, pitch)  // Custom sound name
+        );
+    }
 
 }

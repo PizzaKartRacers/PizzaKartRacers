@@ -1,4 +1,4 @@
-# PizzaKartRacers Minecraft Plugin
+# PizzaKartRacers Minecraft Server
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20.4-brightgreen)
 ![License](https://img.shields.io/badge/License-CC0-blue.svg)

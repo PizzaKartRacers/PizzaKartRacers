@@ -8,6 +8,7 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.entity.metadata.other.ArmorStandMeta;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
+import net.minestom.server.scoreboard.Sidebar;
 
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ public class GamePlayer {
     Kart kart;
     String item;
     int lap;
+    Sidebar sidebar;
 
 
     /**
@@ -90,6 +92,22 @@ public class GamePlayer {
      */
     public void setItem(String item) {
         this.item = item;
+    }
+
+    /**
+     * Get the player's scoreboard
+     * @return the player's scoreboard
+     */
+    public Sidebar getSidebar() {
+        return sidebar;
+    }
+
+    /**
+     * Set the player's scoreboard
+     * @param sidebar the scoreboard to set
+     */
+    public void setSidebar(Sidebar sidebar) {
+        this.sidebar = sidebar;
     }
 
     public void createKart() {

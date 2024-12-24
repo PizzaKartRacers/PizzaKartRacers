@@ -1,6 +1,8 @@
 package me.pizzathatcodes.pizzakartracers.queue_logic;
 
 import me.pizzathatcodes.pizzakartracers.Main;
+import me.pizzathatcodes.pizzakartracers.commands.pingComamnd;
+import me.pizzathatcodes.pizzakartracers.commands.setTimerCommand;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
 import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerLeaveHandler;
 import me.pizzathatcodes.pizzakartracers.queue_logic.events.PlayerSpawnHandler;
@@ -77,7 +79,11 @@ public class Queue {
     }
 
     public void removePlayer(Player player) {
-        playerList.remove(player);
+        for(int i = 0; i < playerList.size(); i++) {
+            if(playerList.get(i).getUuid().equals(player.getUuid())) {
+                playerList.remove(i);
+            }
+        }
     }
 
 

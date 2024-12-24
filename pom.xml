@@ -6,7 +6,7 @@
 
     <groupId>me.pizzathatcodes</groupId>
     <artifactId>PizzaKartRacers</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>PizzaKartRacers</name>
@@ -19,6 +19,7 @@
     </properties>
 
     <build>
+        <finalName>PizzaKartRacers</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>
@@ -62,7 +63,7 @@
         <dependency>
             <groupId>net.minestom</groupId>
             <artifactId>minestom-snapshots</artifactId>
-            <version>18d6e0c6d6</version>
+            <version>ccea53ac44</version>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
@@ -73,6 +74,11 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.12</version>
         </dependency>
     </dependencies>
 </project>

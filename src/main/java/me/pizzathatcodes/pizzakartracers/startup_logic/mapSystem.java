@@ -11,7 +11,7 @@ import java.util.*;
 
 public class mapSystem {
 
-    MapInfo selectedMap;
+    public MapInfo selectedMap;
     public String mapNameWithCode;
     public String code;
     public InstanceContainer mapInstance;

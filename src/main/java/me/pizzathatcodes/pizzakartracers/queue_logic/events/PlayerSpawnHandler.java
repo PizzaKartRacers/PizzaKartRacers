@@ -2,6 +2,7 @@ package me.pizzathatcodes.pizzakartracers.queue_logic.events;
 
 import me.pizzathatcodes.pizzakartracers.Main;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
+import me.pizzathatcodes.pizzakartracers.game_logic.classes.GameState;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.Kart;
 import me.pizzathatcodes.pizzakartracers.game_logic.classes.spectatorSystem;
 import me.pizzathatcodes.pizzakartracers.utils.util;
@@ -21,7 +22,7 @@ public class PlayerSpawnHandler {
         Player player = event.getPlayer();
         player.setInvulnerable(true);
 
-        if(!Main.getGame().getStatus().equalsIgnoreCase("started")) {
+        if(!Main.getGame().getStatus().equals(GameState.IN_GAME)) {
             // TODO: Teleport player to the waiting room
 //            Main.getMapSystem().teleportPlayerToWaitingRoom(player);
             Main.getQueue().addPlayer(player);

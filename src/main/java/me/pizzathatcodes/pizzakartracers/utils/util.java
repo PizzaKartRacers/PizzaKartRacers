@@ -13,6 +13,7 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.metadata.other.ArmorStandMeta;
+import net.minestom.server.network.packet.client.play.ClientInputPacket;
 import net.minestom.server.timer.TaskSchedule;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,7 @@ public class util {
                 .deserialize(message);
     }
 
-    public static void handleSidewayMovement(Player player, float sideways) {
+    public static void handleSidewayMovement(Player player, ClientInputPacket inputPacket) {
         GamePlayer gamePlayer = Main.getGame().getGamePlayer(player.getUuid());
         if (gamePlayer == null) return;
 
@@ -55,11 +56,11 @@ public class util {
         Vec currentHeadPose = kartMeta.getHeadRotation(); // Get the current head rotation
 
         // Determine if player is turning
-        if (sideways != 0) {
-            float newSideways = sideways < 0 ? -1f : 1f;
+        if (inputPacket.left() || inputPacket.right()) {
+            float newSideways = inputPacket.left() ? -1f : 1f;
 
             // Calculate the target tilt based on the direction
-            double targetTilt = newSideways < 0 ? -15 : 15; // Left tilt or right tilt (in degrees)
+            double targetTilt = newSideways < 0 ? -20 : 20; // Left tilt or right tilt (in degrees)
 
             // Cancel any existing tilt task
             if (gamePlayer.getKart().tiltTask != null) {
@@ -86,7 +87,7 @@ public class util {
                     kartMeta.setHeadRotation(new Vec(0, 0, currentTilt));
                     kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
                 }
-            }).repeat(TaskSchedule.tick(2)).schedule(); // Run every 2 ticks
+            }).repeat(TaskSchedule.tick(5)).schedule(); // Run every 2 ticks
 
         } else {
             // If sideways == 0 (no turning), start resetting the tilt back to 0
@@ -112,7 +113,7 @@ public class util {
                     kartMeta.setHeadRotation(new Vec(0, 0, currentTilt));
                     kartEntity.sendPacketToViewersAndSelf(kartEntity.getMetadataPacket()); // Force packet update
                 }
-            }).repeat(TaskSchedule.tick(2)).schedule(); // Run every 2 ticks
+            }).repeat(TaskSchedule.tick(5)).schedule(); // Run every 2 ticks
         }
     }
 
@@ -170,5 +171,18 @@ public class util {
                 }, master, volume, pitch)  // Custom sound name
         );
     }
+
+    public static void spawnOverheatParticles(Pos position) {
+        // Use Minestom's particle API to spawn particles at the specified position
+        for (int i = 0; i < 20; i++) {
+            // Example particle spawning
+//            MinecraftServer.getInstanceManager().getInstances().forEach(instance -> {
+//                instance.getPlayers().forEach(player -> {
+//                    player.playParticle(Particle.LAVA, position, 0.5f, 0.5f, 0.5f, 0.1f, 10);
+//                });
+//            });
+        }
+    }
+
 
 }

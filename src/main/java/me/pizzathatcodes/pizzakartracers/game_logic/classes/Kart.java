@@ -1,12 +1,16 @@
 package me.pizzathatcodes.pizzakartracers.game_logic.classes;
 
 import me.pizzathatcodes.pizzakartracers.Main;
+import me.pizzathatcodes.pizzakartracers.runnables.kart.KartAccelerationRunnable;
 import me.pizzathatcodes.pizzakartracers.utils.util;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
+import net.minestom.server.entity.metadata.other.ArmorStandMeta;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockHandler;
@@ -21,9 +25,15 @@ public class Kart {
 
     LivingEntity kartEntity;
     public int acceleration;
+    public int additionalAcceleration = 0;
+
+
     double handling;
     public int boostPadDelay = 0;
     public boolean drifting;
+    public int driftTicks = 0;
+    public int driftDelay = 0;
+    public boolean spunOut = false;
     public float yaw;
 
     public String moving;
@@ -31,11 +41,11 @@ public class Kart {
 
     public Task boostPadTask;
     public Task decelerationTask;
+    public Task driftDeaccelerationTask;
     public Task bounceTask;
     public Task tiltTask;
-    int additionalAcceleration = 0;
-    boolean finished = false;
-    int bounceTicks = 0; // Use an array to keep track of ticks as lambda requires effectively final variables
+    private boolean hasChargedWhileStill = false;
+
 
     public Kart(int accelerationvar, double handling) {
         this.acceleration = accelerationvar;
@@ -44,25 +54,31 @@ public class Kart {
         moving = "none";
         turning = "none";
         this.drifting = false;
-//        bounceTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
+//        bounceTask = MinecraftServer.getSchedulerManager().buildTask(new Runnable() {
+//                    int bounceTicks = 0;
+//                    @Override
+//                    public void run() {
+//                        // Retrieve current velocity
+//                        Vec currentVelocity = kartEntity.getVelocity();
 //
-//            // Retrieve current velocity
-//            Vec currentVelocity = kartEntity.getVelocity();
+//                        // Gradually go up and down using a sine wave to simulate smooth bouncing
+//                        double bounceHeight = -0.5; // Max bounce height (0.5 total up and down movement)
+//                        double frequency = 0.1;     // How fast the bounce oscillates
 //
-//            // Gradually go up and down using a sine wave to simulate smooth bouncing
-//            double bounceHeight = 0.5; // Max bounce height (0.5 total up and down movement)
-//            double frequency = 0.1;     // How fast the bounce oscillates
+//                        // Calculate the new Y-velocity based on the sine wave
+//                        double yVelocity = Math.sin(bounceTicks * frequency) * bounceHeight;
 //
-//            // Calculate the new Y-velocity based on the sine wave
-//            double yVelocity = Math.sin(bounceTicks * frequency) * bounceHeight;
+//                        // Set the new Y-velocity while keeping the horizontal velocity unchanged
+//                        Vec newVelocity = currentVelocity.withY(yVelocity);
+//                        kartEntity.setVelocity(newVelocity);
 //
-//            // Set the new Y-velocity while keeping the horizontal velocity unchanged
-//            Vec newVelocity = currentVelocity.withY(yVelocity);
-//            kartEntity.setVelocity(newVelocity);
+//                        KartAccelerationRunnable.handleBlockInteractions(Kart.this);
 //
-//            // Increment the bounce ticks for the next step
-//            bounceTicks++;
-//        }).repeat(TaskSchedule.tick(1)).schedule(); // Run every tick (20 times per second)
+//                        // Increment the bounce ticks for the next step
+//                        bounceTicks++;
+//                    }
+//                }).repeat(TaskSchedule.tick(1)).schedule(); // Run every tick (20 times per second)
+
     }
 
     /**
@@ -103,6 +119,13 @@ public class Kart {
     }
 
     /**
+     * @return the driftTicks
+     */
+    public int getDriftTicks() {
+        return driftTicks;
+    }
+
+    /**
      * Set the kartEntity
      * @param kartEntity the kartEntity to set
      */
@@ -123,6 +146,61 @@ public class Kart {
      */
     public boolean isDrifting() {
         return drifting;
+    }
+
+    /**
+     * Set the drift ticks
+     * @param driftTicks the driftTicks to set
+     */
+    public void setDriftTicks(int driftTicks) {
+        this.driftTicks = driftTicks;
+    }
+
+    /**
+     * Set the drift delay
+     * @param driftDelay the driftDelay to set
+     */
+    public void setDriftDelay(int driftDelay) {
+        this.driftDelay = driftDelay;
+    }
+
+    /**
+     * @return if the kart is spun out
+     */
+    public boolean isSpunOut() {
+        return spunOut;
+    }
+
+    /**
+     * Set the spun out state
+     * @param spunOut the spunOut to set
+     */
+    public void setSpunOut(boolean spunOut) {
+        this.spunOut = spunOut;
+    }
+
+    public int getDriftDelay() {
+        return driftDelay;
+    }
+
+    public void setTurning(String turning) {
+        this.turning = turning;
+    }
+
+    public boolean hasChargedWhileStill() {
+        return hasChargedWhileStill;
+    }
+
+    public void setHasChargedWhileStill(boolean hasChargedWhileStill) {
+        this.hasChargedWhileStill = hasChargedWhileStill;
+    }
+
+    public int getAdditionalAcceleration() {
+        return additionalAcceleration;
+    }
+
+    public int getTotalAcceleration() {
+        return acceleration + additionalAcceleration;
     }
 
     /**
@@ -148,7 +226,7 @@ public class Kart {
         direction.normalize();
 
         // Multiply the direction by acceleration to determine the velocity
-        Vec velocity = direction.mul(acceleration * 0.28); // Adjust this factor to control speed
+        Vec velocity = direction.mul((acceleration + additionalAcceleration) * 0.28); // Adjust this factor to control speed
 
         Instance instance = kartEntity.getInstance(); // Replace with your instance source
 
@@ -201,18 +279,39 @@ public class Kart {
 
         boostPadDelay = 2;
 
-        int accelerationIncrement, maxAcceleration, decelerationAmount, finalAccelerationLimit;
+        // Check if kart is drifting and spun out
+        if (drifting && spunOut) {
+            // Cancel spinout state
+            setSpunOut(false);
+
+            // Reset drift ticks or delay
+            driftTicks = 0;
+            driftDelay = 0;
+
+            // Apply a small velocity boost to simulate stabilization
+            Vec currentVelocity = kartEntity.getVelocity();
+            Vec forwardBoost = currentVelocity.normalize().mul(5); // Adjust boost multiplier as needed
+            kartEntity.setVelocity(forwardBoost);
+
+            // Optionally spawn special particles for heat resetting
+            spawnBoostParticles();
+
+            return; // Exit early since we've handled the heat reset
+        }
+
+        // Original boost handling logic
+        int accelerationIncrement, maxAccelerationBoost, decelerationAmount, finalAccelerationLimit;
 
         switch (type) {
             case "SOUTH":
                 accelerationIncrement = 3;
-                maxAcceleration = 50;
-                decelerationAmount = 3;
+                maxAccelerationBoost = 40;
+                decelerationAmount = 2;
                 finalAccelerationLimit = 65;
                 break;
             case "NORTH":
                 accelerationIncrement = 10;
-                maxAcceleration = 90;
+                maxAccelerationBoost = 90;
                 decelerationAmount = 3;
                 finalAccelerationLimit = 65;
                 break;
@@ -221,45 +320,46 @@ public class Kart {
                 return;
         }
 
-        // Reset state variables
-        additionalAcceleration = 0;
-        finished = false;
-
         // Schedule the boost task
-        boostPadTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
-            if (!finished && additionalAcceleration < maxAcceleration) {
-                acceleration += accelerationIncrement;
-                additionalAcceleration += accelerationIncrement;
+        boostPadTask = MinecraftServer.getSchedulerManager().buildTask(new Runnable() {
+            boolean finished = false;
 
-                if (acceleration >= 80 || type.equals("SOUTH")) {
-                    spawnBoostParticles();
-                }
+            @Override
+            public void run() {
+                if (!finished && (additionalAcceleration < maxAccelerationBoost)) {
+                    additionalAcceleration += accelerationIncrement;
 
-                if (additionalAcceleration >= maxAcceleration) {
-                    finished = true;
+                    if (additionalAcceleration >= maxAccelerationBoost) {
+                        finished = true;
 
-                    // Start the deceleration task
-                    decelerationTask = MinecraftServer.getSchedulerManager().buildTask(() -> {
-                        if (acceleration > finalAccelerationLimit) {
-                            acceleration -= decelerationAmount;
-                            if (acceleration >= 80 || type.equals("SOUTH")) {
-                                spawnBoostParticles();
+                        // Start the deceleration task
+                        MinecraftServer.getSchedulerManager().scheduleTask(() -> {
+                            if (getTotalAcceleration() >= finalAccelerationLimit) {
+                                additionalAcceleration -= decelerationAmount;
+                                if (additionalAcceleration >= 80 || type.equals("SOUTH")) {
+                                    spawnBoostParticles();
+                                }
+                            } else {
+                                if(additionalAcceleration < 0)
+                                    additionalAcceleration = 0;
+                                return TaskSchedule.stop();
                             }
-                        } else {
-                            decelerationTask.cancel();
-                            decelerationTask = null;
-                        }
-                    }).repeat(TaskSchedule.tick(2)).schedule();
+                            return TaskSchedule.millis(25);
+                        }, TaskSchedule.millis(1));
+                        boostPadTask.cancel();
+                        boostPadTask = null;
+                    }
+                } else {
+                    // Reset the boost task and state
+                    boostPadTask.cancel();
+                    boostPadTask = null;
                 }
-            } else {
-                // Reset the boost task and state
-                boostPadTask.cancel();
-                boostPadTask = null;
-                finished = false;
-                additionalAcceleration = 0;
+                return;
             }
-        }).repeat(TaskSchedule.tick(2)).schedule();
+        }).repeat(TaskSchedule.tick(2) ).schedule();
+
     }
+
 
 
 
@@ -330,6 +430,13 @@ public class Kart {
             tiltTask = null;
         }
     }
+
+    public Task spinout;
+    public int decelerationAmount;
+
+
+
+
 
 
 

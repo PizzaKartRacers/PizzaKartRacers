@@ -1,6 +1,6 @@
-# PizzaKartRacers Minecraft Server
+# PizzaKartRacers Minestom Server
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.20.4-brightgreen)
+![Minecraft](https://img.shields.io/badge/Minecraft-minestom-brightgreen)
 ![License](https://img.shields.io/badge/License-CC0-blue.svg)
 ![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)
 
@@ -30,4 +30,4 @@ You will also need a bungeeGuardToken.yml file where it stores the secret code f
 You will also need to provide the worlds in a maps folder on the machine, this is so the program can grab them and use them when needed.
 
 ## Running The Program.
-To run the program, you just need to do `java -jar PizzaKart-VERSION.jar` Currently the jar requires Java 22 to run.
+To run the program, you just need to do `java -jar PizzaKartRacers.jar` Currently the jar requires Java 22 to run.

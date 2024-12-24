@@ -18,16 +18,16 @@ public class KartMovementRunnable {
                 if (gamePlayer == null) {
                     continue;
                 }
+                Player player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(gamePlayer.getUuid());
 
                 // Handle kart movement
-                if (gamePlayer.getKart().getAcceleration() != 0) {
+                if (gamePlayer.getKart().getTotalAcceleration() != 0) {
                     gamePlayer.getKart().move();
                 }
 
                 // Update player "level" equivalent (can be simulated via custom logic)
-                Player player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(gamePlayer.getUuid());
                 if (player != null) {
-                    int level = Math.abs(gamePlayer.getKart().getAcceleration());
+                    int level = Math.abs(gamePlayer.getKart().getTotalAcceleration());
                     player.setLevel(level); // Example: show acceleration in XP bar
 //                    player.sendActionBar(Component.text("Speed Level: " + level)); // Example: show acceleration in ActionBar
                 }

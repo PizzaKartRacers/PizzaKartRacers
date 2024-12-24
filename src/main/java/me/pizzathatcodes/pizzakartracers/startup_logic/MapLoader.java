@@ -89,7 +89,7 @@ public class MapLoader {
         List<Pos> spawnLocations = new ArrayList<>();
 
         for (Map.Entry<Object, Object> entry : locationsSection.entrySet()) {
-            System.out.println("Processing entry: " + entry);
+//            System.out.println("Processing entry: " + entry);
 
             Map<String, Object> locData = (Map<String, Object>) entry.getValue();
 
@@ -101,7 +101,7 @@ public class MapLoader {
             float yaw = toFloat(locData.get("yaw"));
 
             Pos position = new Pos(x, y, z, yaw, pitch);
-            System.out.println("Parsed Pos: " + position);
+//            System.out.println("Parsed Pos: " + position);
 
             spawnLocations.add(position);
         }

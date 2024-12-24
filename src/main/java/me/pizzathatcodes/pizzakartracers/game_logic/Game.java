@@ -1,11 +1,12 @@
 package me.pizzathatcodes.pizzakartracers.game_logic;
 
 import me.pizzathatcodes.pizzakartracers.Main;
-import me.pizzathatcodes.pizzakartracers.game_logic.classes.GamePlayer;
-import me.pizzathatcodes.pizzakartracers.game_logic.classes.Kart;
-import me.pizzathatcodes.pizzakartracers.game_logic.classes.spectatorSystem;
+import me.pizzathatcodes.pizzakartracers.game_logic.classes.*;
+import me.pizzathatcodes.pizzakartracers.game_logic.event.DriftingHandler;
+import me.pizzathatcodes.pizzakartracers.runnables.game.GameStartRunnable;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartAccelerationRunnable;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartBoostPadDelayRunnable;
+import me.pizzathatcodes.pizzakartracers.runnables.kart.KartDriftXPBarRunnable;
 import me.pizzathatcodes.pizzakartracers.runnables.kart.KartMovementRunnable;
 import me.pizzathatcodes.pizzakartracers.utils.util;
 import net.minestom.server.MinecraftServer;
@@ -20,13 +21,13 @@ public class Game {
 
     private ArrayList<GamePlayer> players;
     private ArrayList<spectatorSystem> spectators = new ArrayList<>();
-    private String status;
+    private GameState status;
 
 //    private ArrayList<spectatorSystem> spectators = new ArrayList<>();
 
     public Game() {
         players = new ArrayList<>();
-        status = "waiting";
+        status = GameState.QUEUE;
     }
 
 
@@ -39,7 +40,12 @@ public class Game {
     }
 
     public void removePlayer(GamePlayer player) {
-        players.remove(player);
+        for (GamePlayer gamePlayer : players) {
+            if (gamePlayer.getUuid().equals(player.getUuid())) {
+                players.remove(gamePlayer);
+                break;
+            }
+        }
     }
 
     public GamePlayer getGamePlayer(UUID uuid) {
@@ -50,11 +56,11 @@ public class Game {
         return players.stream().filter(gamePlayer -> gamePlayer.getKart().equals(kart)).findFirst().orElse(null);
     }
 
-    public String getStatus() {
+    public GameState getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(GameState status) {
         this.status = status;
     }
 
@@ -78,8 +84,8 @@ public class Game {
     public void startGame() {
 
         // TODO: Add wait logic so people can't drive off when the game starts
-        setStatus("starting");
-//        gameStartingLogic();
+        setStatus(GameState.STARTING);
+        GameStartRunnable.startTask();
 
         for(GamePlayer gamePlayer : players) {
             Player player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(gamePlayer.getUuid());
@@ -105,6 +111,9 @@ public class Game {
         KartMovementRunnable.startTask();
         KartAccelerationRunnable.startTask();
         KartBoostPadDelayRunnable.startTask();
+        KartDriftXPBarRunnable.startTask();
+        ScoreboardManager.startTask();
+        DriftingHandler.setupTask();
     }
 
 }
